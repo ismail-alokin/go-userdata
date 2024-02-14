@@ -1,0 +1,17 @@
+version: '3.8'
+
+name: go-userdata
+
+services:
+
+  api:
+    container_name: go-userdata
+    build:
+      context: .
+      dockerfile: go.Dockerfile
+    env_file:
+      - ./go.env
+    ports:
+      - 8081:8081
+    volumes:
+      - ./:/app
