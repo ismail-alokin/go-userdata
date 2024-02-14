@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 )
 
 func fetchUsernameList(usersUrl string) ([]Username, error) {
@@ -36,7 +38,8 @@ func fetchUsernameList(usersUrl string) ([]Username, error) {
 	return usernames, nil
 }
 
-func fetchUserInfo(userUrl string, user *UserData) error {
+func fetchUsersInfo(userUrl string, users *[]UserData, wg *sync.WaitGroup, m *sync.Mutex, ctx *context.Context) error {
+	defer wg.Done()
 	resp, err := sendGetRequestToGitHub(userUrl)
 
 	if err != nil || resp.Status[:1] == "4" || resp.Status[:1] == "5" {
@@ -56,7 +59,12 @@ func fetchUserInfo(userUrl string, user *UserData) error {
 		return err
 	}
 
-	json.Unmarshal([]byte(body), user)
+	var user UserData
+	json.Unmarshal([]byte(body), &user)
+
+	m.Lock()
+	*users = append(*users, user)
+	m.Unlock()
 	return nil
 
 }

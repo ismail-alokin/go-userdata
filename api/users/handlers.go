@@ -1,9 +1,11 @@
 package users
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ismail-alokin/go-userdata/utils"
@@ -19,7 +21,7 @@ func GetUserInformationList(c *gin.Context) {
 	limitStr := c.Query("limit")
 
 	x, err := strconv.Atoi(limitStr)
-	if err == nil && x < 100 {
+	if err == nil && x < 30 {
 		limit = x
 	}
 
@@ -27,6 +29,7 @@ func GetUserInformationList(c *gin.Context) {
 		fmt.Println("From cache")
 		res = map[string]interface{}{
 			"success": true,
+			"length":  len(users),
 			"users":   users,
 		}
 	} else {
@@ -40,23 +43,31 @@ func GetUserInformationList(c *gin.Context) {
 			return
 		}
 
+		var wg sync.WaitGroup
+		var m sync.Mutex
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		for i := 0; i < limit; i++ {
+			wg.Add(1)
 			username := usernames[i].Login
+			if i == 5 {
+				usersUrl = "https://api.github.com/usersjjjjjjjj"
+			}
 
 			var userUrl = fmt.Sprintf("%v/%v", usersUrl, username)
-			var user UserData
 
-			err := fetchUserInfo(userUrl, &user)
+			go fetchUsersInfo(userUrl, &users, &wg, &m, &ctx)
 			if err != nil {
 				utils.HandleServerError(err, c)
 				break
 			}
 
-			users = append(users, user)
 		}
-
+		wg.Wait()
 		res = map[string]interface{}{
 			"success": true,
+			"length":  len(users),
 			"users":   users,
 		}
 	}
