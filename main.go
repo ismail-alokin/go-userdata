@@ -5,10 +5,6 @@ import (
 	"github.com/ismail-alokin/go-userdata/api/users"
 )
 
-type RequestBody struct {
-	CardNumber string `json:"card_number"`
-}
-
 func main() {
 	router := gin.Default()
 	router.POST("/users", users.GetUserInformationList)

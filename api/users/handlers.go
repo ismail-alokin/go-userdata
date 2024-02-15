@@ -25,12 +25,13 @@ func GetUserInformationList(c *gin.Context) {
 		limit = x
 	}
 
-	if len(users) == limit {
+	if len(users) >= limit {
 		fmt.Println("From cache")
+		usersResponse := users[:limit]
 		res = map[string]interface{}{
 			"success": true,
-			"length":  len(users),
-			"users":   users,
+			"length":  len(usersResponse),
+			"users":   usersResponse,
 		}
 	} else {
 		users = []UserData{}
@@ -51,18 +52,9 @@ func GetUserInformationList(c *gin.Context) {
 		for i := 0; i < limit; i++ {
 			wg.Add(1)
 			username := usernames[i].Login
-			if i == 5 {
-				usersUrl = "https://api.github.com/usersjjjjjjjj"
-			}
-
 			var userUrl = fmt.Sprintf("%v/%v", usersUrl, username)
 
-			go fetchUsersInfo(userUrl, &users, &wg, &m, &ctx)
-			if err != nil {
-				utils.HandleServerError(err, c)
-				break
-			}
-
+			go fetchUsersInfoAndAppendToUsersSlice(userUrl, &users, &wg, &m, &ctx)
 		}
 		wg.Wait()
 		res = map[string]interface{}{

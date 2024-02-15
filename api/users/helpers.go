@@ -38,7 +38,7 @@ func fetchUsernameList(usersUrl string) ([]Username, error) {
 	return usernames, nil
 }
 
-func fetchUsersInfo(userUrl string, users *[]UserData, wg *sync.WaitGroup, m *sync.Mutex, ctx *context.Context) error {
+func fetchUsersInfoAndAppendToUsersSlice(userUrl string, users *[]UserData, wg *sync.WaitGroup, m *sync.Mutex, ctx *context.Context) error {
 	defer wg.Done()
 	resp, err := sendGetRequestToGitHub(userUrl)
 
@@ -66,7 +66,6 @@ func fetchUsersInfo(userUrl string, users *[]UserData, wg *sync.WaitGroup, m *sy
 	*users = append(*users, user)
 	m.Unlock()
 	return nil
-
 }
 
 func sendGetRequestToGitHub(url string) (*http.Response, error) {
